@@ -6,4 +6,5 @@ import { DragNDropItemDirective } from '../item';
 })
 export class DragNDropService {
     readonly dndItems = signal<readonly DragNDropItemDirective[] | null>(null);
+    readonly dndElemContainer = signal<HTMLElement | null>(null);
 }

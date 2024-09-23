@@ -1,24 +1,26 @@
 :host {
     position: relative;
-    display: block;
+    display: flex;
+    justify-content: center;
+    justify-items: center;
+    margin: auto 0;
+    width: 100%;
+    height: 100%;
 }
 
 .container {
-    display: flex;
-    // flex-direction: column;
     position: relative;
-    width: 60vw;
-    height: 50vh;
-    top: 100px;
-    left: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    flex-wrap: wrap;
+    width: fit-content;
+    max-width: 80%;
+    width: 80%;
     background-color: greenyellow;
-    padding: 50px;
+    // padding: 50px; // почему-то с паддингами все ломается, идет лесенкой, как-то надо это учесть в директиве
 }
-
-// .test-wrapper {
-//     position: relative;
-//     border: 1px solid blue;
-// }
 
 .dnd-item {
     position: relative;
@@ -36,5 +38,14 @@
     }
     &3 {
         background-color: black;
+    }
+    &4 {
+        background-color: brown;
+    }
+    &5 {
+        background-color: chocolate;
+    }
+    &6 {
+        background-color: palevioletred;
     }
 }
