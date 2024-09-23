@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { DragNDropModule } from 'src/directives/drag-n-drop';
 
 @Component({
     standalone: true,
-    imports: [RouterModule],
+    imports: [DragNDropModule],
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrl: './app.component.scss',

@@ -1,0 +1,40 @@
+:host {
+    position: relative;
+    display: block;
+}
+
+.container {
+    display: flex;
+    // flex-direction: column;
+    position: relative;
+    width: 60vw;
+    height: 50vh;
+    top: 100px;
+    left: 100px;
+    background-color: greenyellow;
+    padding: 50px;
+}
+
+// .test-wrapper {
+//     position: relative;
+//     border: 1px solid blue;
+// }
+
+.dnd-item {
+    position: relative;
+    margin: 20px;
+    width: 150px;
+    height: 150px;
+    cursor: grab;
+}
+.i {
+    &1 {
+        background-color: red;
+    }
+    &2 {
+        background-color: blue;
+    }
+    &3 {
+        background-color: black;
+    }
+}
