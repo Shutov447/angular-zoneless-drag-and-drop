@@ -13,14 +13,27 @@ import { isSufficientCovered } from '../lib';
 
 @Directive({
     selector: '[appDragNDropItem]',
+    host: {
+        '[style.zIndex]': 'zIndex()',
+        '[style.cursor]': 'this.isStartDrag() ? "grabbing" : "grab"',
+        '[style.top]': 'position().top + "px"',
+        '[style.left]': 'position().left + "px"',
+    },
 })
 export class DragNDropItemDirective implements OnInit {
     private readonly eRef = inject<ElementRef<HTMLElement>>(ElementRef);
     private readonly elem = this.eRef.nativeElement;
     private readonly dndService = inject(DragNDropService);
-    private readonly isStartDragEffect = effect(() => {
-        this.elem.style.cursor = this.isStartDrag() ? 'grabbing' : 'grab';
+    private readonly init = signal(false);
+    private readonly isStartDrag = signal(false);
+    private readonly isDraggedItemNow = signal(false);
+    private readonly zIndex = signal(1);
+    private readonly position = signal({
+        top: 0,
+        left: 0,
     });
+    private readonly absoluteInitialPosX = this.elem.getBoundingClientRect().x;
+    private readonly absoluteInitialPosY = this.elem.getBoundingClientRect().y;
     private readonly dndSiblingItems = computed(() =>
         this.init()
             ? this.dndService
@@ -44,10 +57,6 @@ export class DragNDropItemDirective implements OnInit {
         },
         { allowSignalWrites: true }
     );
-    private readonly init = signal(false);
-    private readonly isStartDrag = signal(false);
-    private readonly absoluteInitialPosX = this.elem.getBoundingClientRect().x;
-    private readonly absoluteInitialPosY = this.elem.getBoundingClientRect().y;
 
     private containerRelativeStartPos = {
         top: 0,
@@ -60,24 +69,22 @@ export class DragNDropItemDirective implements OnInit {
         this.init.set(true);
     }
 
-    @HostListener('mousedown', ['$event']) private onMousedown(
-        event: MouseEvent
-    ) {
+    @HostListener('window:mouseup')
+    private onWindowMouseup() {
+        if (this.isDraggedItemNow()) {
+            this.setStartPosition();
+            this.setContainerRelativeStartPosAfterSwitching();
+            this.isDraggedItemNow.set(false);
+        }
+    }
+
+    @HostListener('mousedown', ['$event'])
+    private onMousedown(event: MouseEvent) {
         this.setDragStartState(event.x, event.y);
     }
 
-    //  TODO: с window:mouseup надо чета делать, так как это не правильно(хз)
-    // надо чета делать с тем что 'window:mouseup' вызывается для всех вообще dndItem
-    @HostListener('window:mouseup')
-    @HostListener('mouseup')
-    private onMouseup() {
-        this.setStartPosition();
-    }
-
-    // TODO: сделать так, чтобы события не всплывали(тоже хз)
-    @HostListener('mousemove', ['$event']) private onMousemove(
-        event: MouseEvent
-    ) {
+    @HostListener('mousemove', ['$event'])
+    private onMousemove(event: MouseEvent) {
         if (this.isStartDrag()) {
             const coveredSibling = this.getCoveredSibling();
 
@@ -85,6 +92,14 @@ export class DragNDropItemDirective implements OnInit {
                 ? this.switchStartPosition(coveredSibling)
                 : this.elemOffsetToPoint(event.x, event.y);
         }
+    }
+
+    @HostListener('mouseup')
+    private onMouseup() {
+        this.setStartPosition();
+        this.setContainerRelativeStartPosAfterSwitching();
+        this.containerRelativeStartPos =
+            this.coveredSiblingRelativeStartPosAfterSwitching;
     }
 
     private transformInitialSetup(dndContainerElem: HTMLElement) {
@@ -100,8 +115,10 @@ export class DragNDropItemDirective implements OnInit {
     }
 
     private setElementPositionToAbsolute() {
-        this.elem.style.top = this.containerRelativeStartPos.top + 'px';
-        this.elem.style.left = this.containerRelativeStartPos.left + 'px';
+        this.position.set({
+            top: this.containerRelativeStartPos.top,
+            left: this.containerRelativeStartPos.left,
+        });
 
         window.setTimeout(() => (this.elem.style.position = 'absolute'));
     }
@@ -121,27 +138,50 @@ export class DragNDropItemDirective implements OnInit {
             top,
             left,
         };
+        this.containerRelativeStartPosAfterSwitching = {
+            top,
+            left,
+        };
+        this.coveredSiblingRelativeStartPosAfterSwitching = {
+            top,
+            left,
+        };
     }
 
+    private containerRelativeStartPosAfterSwitching = {
+        top: 0,
+        left: 0,
+    };
+    private coveredSiblingRelativeStartPosAfterSwitching = {
+        top: 0,
+        left: 0,
+    };
     private switchStartPosition(dndItem: DragNDropItemDirective) {
-        const newContainerRelativeStartPos = dndItem.containerRelativeStartPos;
-        const newDndItemContainerRelativeStartPos =
-            this.containerRelativeStartPos;
+        const oldContainerRelativeStartPosAfterSwitching =
+            this.containerRelativeStartPosAfterSwitching;
+        const oldDndItemContainerRelativeStartPos =
+            dndItem.containerRelativeStartPos;
+        const oldDndItemContainerRelativeStartPosAfterSwitching =
+            dndItem.containerRelativeStartPosAfterSwitching;
 
-        this.containerRelativeStartPos = newContainerRelativeStartPos;
-        this.setStartPosition(); // рабочее решение но с нюансом(оно сразу меняет позиции),
-        // но походу это даже лучше, так как можно сделать так, что если чел секунду покрывал элемент,
-        // то меням сразу, иначе вообще не меняем, а чел просто дальше идет выбирать
+        dndItem.containerRelativeStartPos =
+            oldContainerRelativeStartPosAfterSwitching;
+        dndItem.containerRelativeStartPosAfterSwitching =
+            oldContainerRelativeStartPosAfterSwitching;
 
-        dndItem.containerRelativeStartPos = newDndItemContainerRelativeStartPos;
+        this.coveredSiblingRelativeStartPosAfterSwitching =
+            oldDndItemContainerRelativeStartPosAfterSwitching;
+        this.containerRelativeStartPosAfterSwitching =
+            oldDndItemContainerRelativeStartPos;
+
         dndItem.setStartPosition();
     }
 
     private elemOffsetToPoint(x: number, y: number) {
-        this.elem.style.top =
-            y + this.containerRelativeStartPos.top - this.startDragY + 'px';
-        this.elem.style.left =
-            x + this.containerRelativeStartPos.left - this.startDragX + 'px';
+        this.position.set({
+            top: y + this.containerRelativeStartPos.top - this.startDragY,
+            left: x + this.containerRelativeStartPos.left - this.startDragX,
+        });
     }
 
     private getCoveredSibling() {
@@ -153,14 +193,22 @@ export class DragNDropItemDirective implements OnInit {
     private setDragStartState(x: number, y: number) {
         this.startDragY = y;
         this.startDragX = x;
-        this.elem.style.zIndex = '999';
+        this.zIndex.set(999);
         this.isStartDrag.set(true);
+        this.isDraggedItemNow.set(true);
+    }
+
+    private setContainerRelativeStartPosAfterSwitching() {
+        this.containerRelativeStartPos =
+            this.coveredSiblingRelativeStartPosAfterSwitching;
     }
 
     setStartPosition() {
-        this.elem.style.top = this.containerRelativeStartPos.top + 'px';
-        this.elem.style.left = this.containerRelativeStartPos.left + 'px';
-        this.elem.style.zIndex = '0';
+        this.position.set({
+            top: this.containerRelativeStartPosAfterSwitching.top,
+            left: this.containerRelativeStartPosAfterSwitching.left,
+        });
+        this.zIndex.set(1);
         this.isStartDrag.set(false);
     }
 }
