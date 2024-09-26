@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { DragNDropItemDirective } from '../item';
+import { DragNDropItemDirective } from '../../item';
 
 @Injectable({
     providedIn: 'root',

@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { DragNDropContainerDirective } from './container';
 import { DragNDropItemDirective } from './item';
-import { DragNDropService } from './service';
+import { DragNDropService } from './lib';
 
 @NgModule({
     declarations: [DragNDropContainerDirective, DragNDropItemDirective],

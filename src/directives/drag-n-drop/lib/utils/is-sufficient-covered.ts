@@ -1,7 +1,7 @@
 export const isSufficientCovered = (
     draggedItem: HTMLElement,
     targetItem: HTMLElement,
-    coveragePercentage: number
+    coveragePercentage: number,
 ): boolean => {
     const draggedRect = draggedItem.getBoundingClientRect();
     const targetRect = targetItem.getBoundingClientRect();
@@ -17,7 +17,7 @@ export const isSufficientCovered = (
 
 export const getIntersection = (
     rect1: DOMRect,
-    rect2: DOMRect
+    rect2: DOMRect,
 ): DOMRect | null => {
     const left = Math.max(rect1.left, rect2.left);
     const right = Math.min(rect1.right, rect2.right);

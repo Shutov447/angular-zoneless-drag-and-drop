@@ -7,7 +7,7 @@ import {
     OnInit,
 } from '@angular/core';
 import { DragNDropItemDirective } from '../item';
-import { DragNDropService } from '../service/drag-n-drop.service';
+import { DragNDropService } from '../lib';
 
 @Directive({
     selector: '[appDragNDropContainer]',
@@ -22,7 +22,7 @@ export class DragNDropContainerDirective implements OnInit {
         },
         {
             allowSignalWrites: true,
-        }
+        },
     );
 
     ngOnInit() {

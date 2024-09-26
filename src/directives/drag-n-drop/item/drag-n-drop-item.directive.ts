@@ -8,8 +8,7 @@ import {
     OnInit,
     signal,
 } from '@angular/core';
-import { DragNDropService } from '../service/drag-n-drop.service';
-import { isSufficientCovered } from '../lib';
+import { isSufficientCovered, DragNDropService } from '../lib';
 
 @Directive({
     selector: '[appDragNDropItem]',
@@ -44,9 +43,9 @@ export class DragNDropItemDirective implements OnInit {
                               absoluteInitialPosX ===
                                   this.absoluteInitialPosX &&
                               absoluteInitialPosY === this.absoluteInitialPosY
-                          )
+                          ),
                   )
-            : []
+            : [],
     );
     private readonly dndElemContainerEffect = effect(
         () => {
@@ -55,7 +54,7 @@ export class DragNDropItemDirective implements OnInit {
 
             dndContainerElem && this.transformInitialSetup(dndContainerElem);
         },
-        { allowSignalWrites: true }
+        { allowSignalWrites: true },
     );
 
     private containerRelativeStartPos = {
@@ -186,7 +185,7 @@ export class DragNDropItemDirective implements OnInit {
 
     private getCoveredSibling() {
         return this.dndSiblingItems()?.find((item) =>
-            isSufficientCovered(this.elem, item.elem, 50)
+            isSufficientCovered(this.elem, item.elem, 50),
         );
     }
 

@@ -30,7 +30,7 @@ module.exports = [
                     style: 'kebab-case',
                 },
             ],
-            '@typescript-eslint/no-unused-expressions': 'allow',
+            '@typescript-eslint/no-unused-expressions': 'off',
         },
     },
     {
