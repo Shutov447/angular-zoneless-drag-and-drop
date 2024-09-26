@@ -1,14 +1,15 @@
 import {
-    computed,
+    DestroyRef,
     Directive,
-    effect,
     ElementRef,
     HostListener,
     inject,
     OnInit,
     signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isSufficientCovered, DragNDropService } from '../lib';
+import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 
 @Directive({
     selector: '[appDragNDropItem]',
@@ -20,9 +21,15 @@ import { isSufficientCovered, DragNDropService } from '../lib';
     },
 })
 export class DragNDropItemDirective implements OnInit {
+    private readonly destroyRef = inject(DestroyRef);
     private readonly eRef = inject<ElementRef<HTMLElement>>(ElementRef);
     private readonly elem = this.eRef.nativeElement;
     private readonly dndService = inject(DragNDropService);
+    private readonly coveredDndItemToSwitch = new Subject<
+        DragNDropItemDirective | undefined
+    >();
+    private readonly coveragePercentage = this.dndService.coveragePercentage;
+    private readonly coverageTime = this.dndService.coverageTime;
     private readonly init = signal(false);
     private readonly isStartDrag = signal(false);
     private readonly isDraggedItemNow = signal(false);
@@ -33,31 +40,12 @@ export class DragNDropItemDirective implements OnInit {
     });
     private readonly absoluteInitialPosX = this.elem.getBoundingClientRect().x;
     private readonly absoluteInitialPosY = this.elem.getBoundingClientRect().y;
-    private readonly dndSiblingItems = computed(() =>
-        this.init()
-            ? this.dndService
-                  .dndItems()
-                  ?.filter(
-                      ({ absoluteInitialPosX, absoluteInitialPosY }) =>
-                          !(
-                              absoluteInitialPosX ===
-                                  this.absoluteInitialPosX &&
-                              absoluteInitialPosY === this.absoluteInitialPosY
-                          ),
-                  )
-            : [],
-    );
-    private readonly dndElemContainerEffect = effect(
-        () => {
-            const dndContainerElem =
-                this.dndService.dndElemContainer() as HTMLElement;
-
-            dndContainerElem && this.transformInitialSetup(dndContainerElem);
-        },
-        { allowSignalWrites: true },
-    );
-
+    private dndSiblingItems: readonly DragNDropItemDirective[] = [];
     private containerRelativeStartPos = {
+        top: 0,
+        left: 0,
+    };
+    private containerRelativeStartPosAfterSwitching = {
         top: 0,
         left: 0,
     };
@@ -66,6 +54,37 @@ export class DragNDropItemDirective implements OnInit {
 
     ngOnInit() {
         this.init.set(true);
+        this.dndSiblingItems = this.getDndSiblingItems();
+        this.transformInitialSetup(
+            this.dndService.dndElemContainer() as HTMLElement,
+        );
+        this.subscribeToCoveredDndItem();
+    }
+
+    private subscribeToCoveredDndItem() {
+        this.coveredDndItemToSwitch
+            .asObservable()
+            .pipe(
+                distinctUntilChanged(),
+                debounceTime(this.coverageTime()),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((target) => {
+                if (target && this.isStartDrag()) {
+                    this.switchStartPosition(target);
+                }
+            });
+    }
+
+    private getDndSiblingItems() {
+        return this.dndService.dndItems().filter(
+            // вместо этого сравнивать по id, надо создать сервис который будет генерить id каждому элементу от 0 и до последнего в контейнере
+            ({ absoluteInitialPosX, absoluteInitialPosY }) =>
+                !(
+                    absoluteInitialPosX === this.absoluteInitialPosX &&
+                    absoluteInitialPosY === this.absoluteInitialPosY
+                ),
+        );
     }
 
     @HostListener('window:mouseup')
@@ -87,9 +106,8 @@ export class DragNDropItemDirective implements OnInit {
         if (this.isStartDrag()) {
             const coveredSibling = this.getCoveredSibling();
 
-            coveredSibling
-                ? this.switchStartPosition(coveredSibling)
-                : this.elemOffsetToPoint(event.x, event.y);
+            this.coveredDndItemToSwitch.next(coveredSibling);
+            this.elemOffsetToPoint(event.x, event.y);
         }
     }
 
@@ -97,8 +115,6 @@ export class DragNDropItemDirective implements OnInit {
     private onMouseup() {
         this.setStartPosition();
         this.setContainerRelativeStartPosAfterSwitching();
-        this.containerRelativeStartPos =
-            this.coveredSiblingRelativeStartPosAfterSwitching;
     }
 
     private transformInitialSetup(dndContainerElem: HTMLElement) {
@@ -107,7 +123,6 @@ export class DragNDropItemDirective implements OnInit {
         const oldDndContainerWidth = dndContainerDomRect.width;
 
         this.setContainerRelativeStartPos(dndContainerDomRect);
-        this.setElementPositionToAbsolute();
 
         dndContainerElem.style.height = oldDndContainerHeight + 'px';
         dndContainerElem.style.width = oldDndContainerWidth + 'px';
@@ -141,35 +156,20 @@ export class DragNDropItemDirective implements OnInit {
             top,
             left,
         };
-        this.coveredSiblingRelativeStartPosAfterSwitching = {
-            top,
-            left,
-        };
+        this.setElementPositionToAbsolute();
     }
 
-    private containerRelativeStartPosAfterSwitching = {
-        top: 0,
-        left: 0,
-    };
-    private coveredSiblingRelativeStartPosAfterSwitching = {
-        top: 0,
-        left: 0,
-    };
     private switchStartPosition(dndItem: DragNDropItemDirective) {
         const oldContainerRelativeStartPosAfterSwitching =
             this.containerRelativeStartPosAfterSwitching;
         const oldDndItemContainerRelativeStartPos =
             dndItem.containerRelativeStartPos;
-        const oldDndItemContainerRelativeStartPosAfterSwitching =
-            dndItem.containerRelativeStartPosAfterSwitching;
 
         dndItem.containerRelativeStartPos =
             oldContainerRelativeStartPosAfterSwitching;
         dndItem.containerRelativeStartPosAfterSwitching =
             oldContainerRelativeStartPosAfterSwitching;
 
-        this.coveredSiblingRelativeStartPosAfterSwitching =
-            oldDndItemContainerRelativeStartPosAfterSwitching;
         this.containerRelativeStartPosAfterSwitching =
             oldDndItemContainerRelativeStartPos;
 
@@ -184,8 +184,12 @@ export class DragNDropItemDirective implements OnInit {
     }
 
     private getCoveredSibling() {
-        return this.dndSiblingItems()?.find((item) =>
-            isSufficientCovered(this.elem, item.elem, 50),
+        return this.dndSiblingItems.find((item) =>
+            isSufficientCovered(
+                this.elem,
+                item.elem,
+                this.coveragePercentage(),
+            ),
         );
     }
 
@@ -198,8 +202,7 @@ export class DragNDropItemDirective implements OnInit {
     }
 
     private setContainerRelativeStartPosAfterSwitching() {
-        this.containerRelativeStartPos =
-            this.coveredSiblingRelativeStartPosAfterSwitching;
+        this.containerRelativeStartPos = this.position();
     }
 
     setStartPosition() {

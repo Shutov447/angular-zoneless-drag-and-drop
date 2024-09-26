@@ -1,9 +1,9 @@
 import {
     contentChildren,
     Directive,
-    effect,
     ElementRef,
     inject,
+    input,
     OnInit,
 } from '@angular/core';
 import { DragNDropItemDirective } from '../item';
@@ -16,16 +16,14 @@ export class DragNDropContainerDirective implements OnInit {
     private readonly hostElem = inject<ElementRef<HTMLElement>>(ElementRef);
     private readonly dndService = inject(DragNDropService);
     private readonly dndItems = contentChildren(DragNDropItemDirective);
-    private readonly dndItemsEffect = effect(
-        () => {
-            this.dndService.dndItems.set(this.dndItems());
-        },
-        {
-            allowSignalWrites: true,
-        },
-    );
+
+    readonly coveragePercentage = input(0);
+    readonly coverageTime = input(0);
 
     ngOnInit() {
         this.dndService.dndElemContainer.set(this.hostElem.nativeElement);
+        this.dndService.dndItems.set(this.dndItems());
+        this.dndService.coveragePercentage.set(this.coveragePercentage());
+        this.dndService.coverageTime.set(this.coverageTime());
     }
 }
