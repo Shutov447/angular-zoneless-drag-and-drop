@@ -7,15 +7,15 @@ import {
     DragNDropContainerService,
     DragNDropCoverageService,
     DragNDropItemsService,
-} from './model';
-import { IdService } from './lib';
+    IdService,
+} from './lib';
 
 @NgModule({
     declarations: [DragNDropContainerDirective, DragNDropItemDirective],
     providers: [
         DragNDropContainerService,
-        DragNDropCoverageService,
         DragNDropItemsService,
+        DragNDropCoverageService,
         IdService,
     ],
     exports: [DragNDropContainerDirective, DragNDropItemDirective],

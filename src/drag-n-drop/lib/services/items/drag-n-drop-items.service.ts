@@ -1,5 +1,5 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { DragNDropItemDirective } from 'src/drag-n-drop/directives';
+import { DragNDropItemDirective } from '../../../directives';
 import { DragNDropCoverageService } from '../coverage';
 import { isSufficientCovered } from '../../../lib';
 
@@ -7,19 +7,15 @@ import { isSufficientCovered } from '../../../lib';
     providedIn: 'root',
 })
 export class DragNDropItemsService {
-    private readonly dndItems = signal<readonly DragNDropItemDirective[]>([]);
     private readonly coverageService = inject(DragNDropCoverageService);
+    private readonly dndItems = signal<readonly DragNDropItemDirective[]>([]);
 
     setDndItems(items: readonly DragNDropItemDirective[]) {
         this.dndItems.set(items);
     }
 
-    getDndItems() {
-        return this.dndItems();
-    }
-
     getDndSiblingItemsOf(draggedId: number) {
-        return this.getDndItems().filter(({ id }) => id !== draggedId);
+        return this.dndItems().filter(({ id }) => id !== draggedId);
     }
 
     getCoveredSibling(

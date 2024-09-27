@@ -11,7 +11,7 @@ import {
     DragNDropContainerService,
     DragNDropCoverageService,
     DragNDropItemsService,
-} from '../../model';
+} from '../../lib';
 
 @Directive({
     selector: '[appDragNDropContainer]',
