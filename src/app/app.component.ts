@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { DragNDropModule } from 'src/directives/drag-n-drop';
+import { DragNDropModule } from 'src/drag-n-drop';
 
 @Component({
     standalone: true,
