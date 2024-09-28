@@ -1,50 +1,22 @@
 :host {
-    position: relative;
     display: flex;
-    justify-content: center;
-    justify-items: center;
-    margin: auto;
     width: 100%;
     height: 100%;
 }
 
 .container {
-    position: relative;
     display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
     flex-wrap: wrap;
-    width: fit-content;
-    max-width: 80%;
-    width: 80%;
+    width: 100%;
+    height: 100%;
     background-color: greenyellow;
     // padding: 50px; // почему-то с паддингами все ломается, идет лесенкой, как-то надо это учесть в директиве
 }
 
 .dnd-item {
     margin: 20px;
-    width: 150px;
-    height: 150px;
-    cursor: grab;
-}
-.i {
-    &1 {
-        background-color: red;
-    }
-    &2 {
-        background-color: blue;
-    }
-    &3 {
-        background-color: black;
-    }
-    &4 {
-        background-color: brown;
-    }
-    &5 {
-        background-color: chocolate;
-    }
-    &6 {
-        background-color: palevioletred;
-    }
+    min-width: 150px;
+    min-height: 150px;
+    max-width: 150px;
+    max-height: 150px;
 }

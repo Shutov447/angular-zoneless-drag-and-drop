@@ -9,5 +9,15 @@ import { DragNDropModule } from 'src/drag-n-drop';
     styleUrl: './app.component.scss',
 })
 export class AppComponent {
-    title = 'angular-zoneless-drag-n-drop';
+    readonly title = 'angular-zoneless-drag-n-drop';
+    readonly gifs = [
+        'gifs/chego_blyat.gif',
+        'gifs/dokibird-huh.gif',
+        'gifs/sticker.gif',
+        'gifs/Vince_McMahon_no_comments.gif',
+        'gifs/vybor_personazha.gif',
+        'gifs/Tryaskkhalko.gif',
+        'gifs/Oguzok_ukhmylnulsya_i_ushyol.gif',
+        'gifs/fart-eye-brow.gif',
+    ];
 }

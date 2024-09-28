@@ -1,7 +1,7 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { DragNDropItemDirective } from '../../../directives';
 import { DragNDropCoverageService } from '../coverage';
-import { isSufficientCovered } from '../../../lib';
+import { isSufficientCovered, Transition } from '../../../lib';
 
 @Injectable({
     providedIn: 'root',
@@ -9,6 +9,10 @@ import { isSufficientCovered } from '../../../lib';
 export class DragNDropItemsService {
     private readonly coverageService = inject(DragNDropCoverageService);
     private readonly dndItems = signal<readonly DragNDropItemDirective[]>([]);
+    readonly transitions = signal<Transition[]>([
+        ['top', 200, 'ease-out'],
+        ['left', 200, 'ease-out'],
+    ]);
 
     setDndItems(items: readonly DragNDropItemDirective[]) {
         this.dndItems.set(items);

@@ -19,8 +19,9 @@ import {
         '[style.zIndex]': 'this.zIndex()',
         '[style.cursor]': 'this.cursor()',
         '[style.position]': 'this.positionService.positionType()',
-        '[style.top]': 'this.positionService.currentPosition().top + "px"',
-        '[style.left]': 'this.positionService.currentPosition().left + "px"',
+        '[style.top]': 'this.top() + "px"',
+        '[style.left]': 'this.left() + "px"',
+        '[style.transition]': 'this.transition()',
     },
 })
 export class DragNDropItemDirective implements OnInit {
@@ -29,14 +30,29 @@ export class DragNDropItemDirective implements OnInit {
         this.dndFacadeService.dragStateService.isDraggedItemNow;
     private readonly isStartDrag =
         this.dndFacadeService.dragStateService.isStartDrag;
+    private readonly isStartSwitching =
+        this.dndFacadeService.positionService.isStartSwitching;
 
-    readonly elem = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
     readonly positionService = this.dndFacadeService.positionService;
+    readonly elem = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
     readonly id = this.dndFacadeService.id;
-    readonly zIndex = computed(() => (this.isStartDrag() ? 999 : 1));
+
+    readonly top = computed(
+        () => this.dndFacadeService.positionService.currentPosition().top,
+    );
+    readonly left = computed(
+        () => this.dndFacadeService.positionService.currentPosition().left,
+    );
+    readonly zIndex = computed(() => {
+        const zIndex = 999;
+        if (this.isStartDrag()) return zIndex;
+        if (this.isStartSwitching()) return zIndex - 1;
+        return 1;
+    });
     readonly cursor = computed(() =>
         this.isStartDrag() ? 'grabbing' : 'grab',
     );
+    readonly transition = this.dndFacadeService.transition;
 
     ngOnInit() {
         this.dndFacadeService.init(this.elem);
@@ -44,6 +60,7 @@ export class DragNDropItemDirective implements OnInit {
 
     @HostListener('window:mouseup')
     private onWindowMouseup() {
+        console.log();
         if (this.isDraggedItemNow()) {
             this.dndFacadeService.onMouseUp();
             this.isDraggedItemNow.set(false);
@@ -64,5 +81,24 @@ export class DragNDropItemDirective implements OnInit {
     @HostListener('mouseup')
     private onMouseup() {
         this.dndFacadeService.onMouseUp();
+    }
+
+    @HostListener('window:drag', ['$event'])
+    @HostListener('window:dragend', ['$event'])
+    @HostListener('window:dragenter', ['$event'])
+    @HostListener('window:dragleave', ['$event'])
+    @HostListener('window:dragover', ['$event'])
+    @HostListener('window:dragstart', ['$event'])
+    @HostListener('window:drop', ['$event'])
+    @HostListener('drag', ['$event'])
+    @HostListener('dragend', ['$event'])
+    @HostListener('dragenter', ['$event'])
+    @HostListener('dragleave', ['$event'])
+    @HostListener('dragover', ['$event'])
+    @HostListener('dragstart', ['$event'])
+    @HostListener('drop', ['$event'])
+    private eventPreventDefault(event: MouseEvent) {
+        event.preventDefault();
+        event.stopPropagation();
     }
 }
