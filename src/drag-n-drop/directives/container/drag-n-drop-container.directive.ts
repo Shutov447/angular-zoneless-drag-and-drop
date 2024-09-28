@@ -27,7 +27,7 @@ export class DragNDropContainerDirective implements AfterViewInit {
     private readonly coverageService = inject(DragNDropCoverageService);
     private readonly dndItems = contentChildren(DragNDropItemDirective);
 
-    readonly coveragePercentage = input(0);
+    readonly coveragePercentage = input(50);
     readonly coverageTime = input(0);
     readonly transitions = input<Transition[]>([]);
 
